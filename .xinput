@@ -1,0 +1,16 @@
+#!/bin/sh
+
+# keyboard settings
+xset r rate 170 70
+
+# mouse speed
+xset m 0 1
+
+setxkbmap -layout en_US
+
+setxkbmap -option ctrl:nocaps
+# disable secondary <> keys
+xmodmap -e 'keycode 94 ='
+
+#setxkbmap -layout de -variant nodeadkeys
+#xmodmap ~/.Xmodmap
