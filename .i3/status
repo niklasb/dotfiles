@@ -1,0 +1,27 @@
+general {
+  #output_format = dzen2
+  #colors = true
+  interval = 3
+}
+
+order = "battery 0"
+order += "cpu_temperature 0"
+order += "load"
+order += "time"
+
+battery 0 {
+        format = "%status %percentage %remaining"
+}
+
+time {
+        format = "%Y-%m-%d %H:%M:%S"
+}
+
+load {
+        format = "%5min"
+}
+
+cpu_temperature 0 {
+        format = "T: %degrees °C"
+        path = "/sys/devices/platform/coretemp.0/temp2_input"
+}
