@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 # keyboard settings
 xset r rate 170 70
@@ -6,11 +6,24 @@ xset r rate 170 70
 # mouse speed
 xset m 0 1
 
-setxkbmap -layout en_US
+if [[ "$1" == "en" ]]; then
+  setxkbmap -layout en_US
+else 
+  setxkbmap -layout de -variant nodeadkeys
+fi
 
-setxkbmap -option ctrl:nocaps
+# use CapsLock as ESC
+#xmodmap -e 'clear Lock' -e 'keycode 0x42 = Escape'
+
+# use CapsLock as additional Windows key
+xmodmap -e 'clear Lock' -e 'keycode 0x42 = Super_L'
+
+# disable CapsLock
+#setxkbmap -option ctrl:nocaps
+
 # disable secondary <> keys
 xmodmap -e 'keycode 94 ='
 
 #setxkbmap -layout de -variant nodeadkeys
 #xmodmap ~/.Xmodmap
+xinput set-prop "AlpsPS/2 ALPS DualPoint TouchPad" "Synaptics Finger" 100 110 255

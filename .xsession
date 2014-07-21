@@ -13,17 +13,17 @@ log() {
 }
 
 # dualhead setup (with wallpaper)
-dualhead
+dualhead left &
 
 # keyboard shortcuts
-start-xbindkeys.sh
+start-xbindkeys.sh &
 
 # input settings
-~/.xinput
+~/.xinput en &
 
 # load X resources
 for f in `ls ~/.*.xdefaults`; do
-  xrdb -load $f
+  xrdb -load $f &
 done
 
 # GNOME stuff
@@ -39,15 +39,15 @@ nm-applet &
 #pidgin &
 
 # audio
-start-pulseaudio-x11
+pulseaudio --start
 
 # background tools/daemons
-synergys
-/home/niklas/bin/loop-offlineimap.sh &
+#synergys
+#/home/niklas/bin/loop-offlineimap.sh &
 /home/niklas/bin/check-mail.rb ~/.mail/GMAIL/inbox/new &
 #/home/niklas/bin/crypt.sh &
 #parcellite &
-dropbox start -i &
+#dropbox start -i &
 
 #emacs --daemon &
 

@@ -1,0 +1,42 @@
+urxvt*termName: xterm-color
+
+urxvt*depth: 32
+urxvt*background: rgba:0000/1818/4040/f500
+urxvt*font: xft:Monospace:pixelsize=12
+urxvt*foreground: white
+urxvt*scrollBar: false
+
+! a nice Tango color palette
+urxvt*color0:    #2E3436
+urxvt*color1:    #CC0000
+urxvt*color2:    #4E9A06
+urxvt*color3:    #C4A000
+urxvt*color4:    #3465A4
+urxvt*color5:    #75507B
+urxvt*color6:    #06989A
+urxvt*color7:    #EEEEEE
+
+urxvt*color8:    #555753
+urxvt*color9:    #EF2929
+urxvt*color10:   #8AE234
+urxvt*color11:   #FCE94F
+urxvt*color12:   #729FCF
+urxvt*color13:   #AD7FA8
+urxvt*color14:   #34E2E2
+urxvt*color15:   #FFFFFF
+
+!urxvt.transparent:   true
+!urxvt.tintColor:     #678BC6
+!urxvt.shading:       50
+
+urxvt.perl-ext-common: default,clipboard
+urxvt.keysym.C-v: perl:clipboard:paste
+
+!! prevent Urxvt from printing stuff from the terminal
+!! if I press the wrong keys!
+urxvt.print-pipe: "cat > /dev/null"
+
+urxvt*scrollTtyOutput:      false
+urxvt*scrollWithBuffer:     true
+urxvt*scrollTtyKeypress:    true
+urxvt*saveLines: 100000

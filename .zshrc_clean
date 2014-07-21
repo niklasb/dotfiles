@@ -1,0 +1,213 @@
+#!/bin/zsh
+
+. /etc/profile
+
+# disable flow control (no ctrl+q for screen)
+stty -ixon -ixoff
+
+HISTFILE=~/.zsh_history
+HISTSIZE=100000
+SAVEHIST=100000
+
+zstyle :compinstall filename '~/.zshrc'
+
+autoload -Uz compinit
+compinit
+
+setopt appendhistory autocd
+setopt HIST_IGNORE_DUPS
+setopt extended_glob
+setopt INC_APPEND_HISTORY
+
+# key binding workarounds
+bindkey -e
+
+bindkey "\e[1~" beginning-of-line
+bindkey "\e[2~" quoted-insert
+bindkey "\e[3~" delete-char
+bindkey "\e[4~" end-of-line
+bindkey "\e[5~" beginning-of-history
+bindkey "\e[6~" end-of-history
+bindkey "\e[7~" beginning-of-line
+bindkey "\e[8~" end-of-line
+bindkey "\e[H" beginning-of-line
+bindkey "\e[F" end-of-line
+bindkey "\eOH" beginning-of-line
+bindkey "\eOF" end-of-line
+bindkey "\eOd" backward-word
+bindkey "\eOc" forward-word
+
+# prompt
+#PROMPTS=('=>' '>' '>>' '$' '-=[' '--' '~=(' '??')
+PROMPTS=('$$$' '>>>')
+#PROMPT_COLORS=(red blue green)
+PROMPT_COLORS=(green yellow)
+SUDO_PROMPTS=('[sudo] ')
+
+autoload -U colors && colors
+prompt () {
+  export PS1="%{$fg_bold[$1]%}$2%{$fg_no_bold[white]%}"
+}
+new_prompt() {
+  if [[ $EUID = 0 ]]; then
+    PROMPT_COLOR=red
+    PROMPT='#'
+  else
+    PROMPT=`echo ${(F)PROMPTS} | shuf | head -n 1`
+    PROMPT_COLOR=`echo ${(F)PROMPT_COLORS} | shuf | tail -n 1`
+  fi
+  prompt $PROMPT_COLOR " $PROMPT "
+}
+
+mdcd() {
+  mkdir "$1" && pushd "$1"
+}
+
+# set a title
+title () {
+  ZSH_TITLE=$1
+}
+
+precmd () {
+  case $TERM in
+  xterm)
+    echo -n \\033\]2\;$PWD@$HOST\\07;;
+  esac
+
+  # we want to have a new prompt
+  # if we just startet or if the EUID
+  # changed
+  [[ $EUID != $LAST_EUID ]] && new_prompt
+  LAST_EUID=$EUID
+}
+
+# set screen title (only once ;)
+#[[ "$TERM" = "screen" ]] && echo -n "\ek$HOST:$(basename $PWD)\e\\"
+
+new_sudo_prompt() {
+  SUDO_PROMPT=`echo ${(F)SUDO_PROMPTS} | shuf | head -n 1`
+}
+
+# some helper aliases and variables
+export DOWN="$HOME/Downloads"
+export EDITOR="vim"
+export BROWSER="chromium"
+export QUIET=">/dev/null 2>&1"
+#export MPD_HOST="barney"
+export MPD_HOST="localhost"
+export RUBYLIB=$RUBYLIB:~/toolz/metasm
+alias watch_freq="watch grep MHz /proc/cpuinfo"
+alias watch_temp="watch sensors"
+alias powersave="sudo cpupower frequency-set -g powersave"
+alias ondemand="sudo cpupower frequency-set -g ondemand"
+
+alias xi=~/.xinput
+alias ls="ls --color=auto"
+alias ll="ls --color=auto -alih"
+alias c="clear"
+alias p="pwd"
+
+alias md="mkdir"
+alias ..="cd .."
+alias grep="grep --color=auto"
+alias snano="sudo nano"
+alias semacs="sudo emacs -nw -Q"
+alias sudo='new_sudo_prompt; sudo -p "$SUDO_PROMPT"'
+/opt/arch32/pacman.conf"
+alias rand='dd if=/dev/urandom count=1 2>/dev/null | md5sum | cut -d" " -f 1'
+alias timestamp='date +%Y%m%d_%H%M'
+alias ack='ack --pager=less'
+alias nano='nano -w'
+
+# easy directory switching
+cd() { pushd "$1" >/dev/null }
+alias back="popd >/dev/null; pwd"
+
+killbg() {
+  eval `jobs -p | ruby -n -e '$_ =~ /^\[(\d+)\][\s\-\+]*(\d+)/; next unless $~; print "kill -9 #{$2};disown %#{$1};"'` &>/dev/null
+}
+
+alias Gs="git status"
+alias Gc="git commit"
+alias Gcm="git commit -m"
+alias Gd="git diff"
+alias Gdc="git diff --cached"
+alias Gps="git push"
+alias Gpl="git pull --rebase"
+alias Gco="git checkout"
+alias Gl="git log"
+alias Gr="git reset"
+alias Ga="git add"
+
+# reload config
+reload() {
+  NO_GREETING=1
+  source ~/.zshrc
+}
+
+# grep a whole directory
+grepr() {
+  grep -R * -e "$1"
+}
+
+diffa() {
+  echo "diff $@"
+  diff $@
+}
+
+function e() {
+  "$@" &>/dev/null &
+  job=`jobs |tail -n 1 |grep -o -P '(?<=^\[)\d+'`
+  disown %$job
+  exit 0
+}
+# make e auto-complete like exec
+compdef '_dispatch exec exec' e
+
+# set $PATH
+export PATH=$HOME/.gem/ruby/2.0.0/bin:$HOME/bin:$HOME/.cabal/bin:/usr/local/bin:$HOME/texmf/tex/latex/glossaries:$HOME/devel/scripts+configs/scripts:$HOME/opt/adt-bundle-linux/sdk/platform-tools:$HOME/opt/adt-bundle-linux/sdk/tools:$PATH
+
+# java hack
+export AWT_TOOLKIT=MToolkit
+
+# drop into a screen session
+#if [[ $TERM != "screen" && $SCREEN_TRIES != 1 ]]; then
+#  export SCREEN_TRIES=1
+#  screen
+#fi
+
+export LESSOPEN="| src-hilite-lesspipe.sh %s"
+export LESS=' -R '
+
+#============ shell overlay =========
+
+if [[ $FLOAT -eq 1 ]]; then
+  NO_GREETING=1
+fi
+
+#============ Greeting =============
+
+if [[ $NO_GREETING -ne 1 ]]; then
+  # fortune in red
+  echo -en "$fg_no_bold[red]"
+  which fortune >/dev/null 2>&1 && fortune
+  echo -en "$fg_no_bold[red]"
+  echo
+fi
+alias screen-shared="screen -U -m -d -S shared -c /home/niklas/.screenrc-shared"
+
+alias closure="java -jar $HOME/opt/closure-compiler/compiler.jar"
+alias gpp='g++ -Wall -O2'
+alias gpp11='g++ -Wall -O2 -std=c++11'
+alias cpp='clang++ -Wall -O2'
+alias cpp11='clang++ -Wall -O2 -std=c++11'
+
+fs() {
+  printf '\33]50;%s\007' "xft:Monospace:pixelsize=$1"
+}
+
+export GEM_HOME=$HOME/.gem
+
+alias pcc='clang++ -std=c++11 -DLOCAL -Wall -g -O2'
+alias sol='pcc sol.cpp'
+
