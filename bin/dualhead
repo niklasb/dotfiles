@@ -1,0 +1,101 @@
+#!/bin/sh
+
+if [ -f ~/.multiheadrc ]; then
+  . ~/.multiheadrc
+  CONFIG=1
+else
+  CONFIG=0
+fi
+
+PANELS=1
+if xrandr | grep eDP1; then
+  XRANDR_DEFAULT_OUTPUT=eDP1
+  XRANDR_OUTPUT=$(xrandr | grep " connected" | tail -n 1 | cut -d" " -f1)
+else
+  XRANDR_DEFAULT_OUTPUT=$(xrandr | grep " connected" | tail -n 1 | cut -d" " -f1)
+  XRANDR_OUTPUT=$(xrandr | grep " connected" | head -n 1 | cut -d" " -f1)
+fi
+echo Default: $XRANDR_DEFAULT_OUTPUT
+echo External: $XRANDR_OUTPUT
+
+usage() {
+  echo "Usage: $0 off|top|bottom|left|right" >&2
+  exit 1
+}
+
+# check arguments
+if [ $# -ne 1 -a -z "$DUAL_DEFAULT_POSITION" ]; then
+  usage
+fi
+
+position=$1
+[ -z "$position" ] && position=$DUAL_DEFAULT_POSITION
+
+if xrandr | grep eDP1; then
+  if [[ "$position" != "off" ]]; then
+    if ! pgrep intel-virtual; then
+      nohup optirun intel-virtual-output -f 2>/dev/null &
+      echo "Waiting for ivo to start"
+      sleep 3
+      pgrep intel-virtual
+    fi
+  fi
+fi
+
+case $position in
+  off) ;;
+  above|top)      position=above;;
+  below|bottom)   position=below;;
+  left|left-of)   position=left-of;;
+  right|right-of) position=right-of;;
+  *) usage;;
+esac
+
+[[ "x$1" == "xoff" || \
+   "$XRANDR_DEFAULT_OUTPUT" == "$XRANDR_OUTPUT" ]] && DUAL=0 || DUAL=1
+
+[ $CONFIG -eq 1 ] && multihead_before
+
+echo "first output: $XRANDR_DEFAULT_OUTPUT"
+echo "second output: $XRANDR_OUTPUT"
+echo "Position: $position"
+
+if [ $DUAL -eq 0 ]; then
+  echo Turning dualhead off
+
+  if xrandr | grep eDP1; then
+    killall -9 intel-virtual-output 2>/dev/null
+  fi
+
+  # turn screen off
+  if [[ "$XRANDR_DEFAULT_OUTPUT" != "$XRANDR_OUTPUT" ]]; then
+    xrandr --output $XRANDR_OUTPUT --off
+    DISPLAYS=1
+  fi
+else
+  echo "Turning dualhead on (position: $position)"
+  # turn screen on
+  xrandr --output $XRANDR_OUTPUT --auto --$position $XRANDR_DEFAULT_OUTPUT
+  DISPLAYS=2
+fi
+
+GAMMA="1.05:0.9:1.1"
+
+# workaround for wrong default resolution in ThinkPad P50 with intel driver
+if [[ $XRANDR_DEFAULT_OUTPUT == "eDP1" ]]; then
+  xrandr --output $XRANDR_DEFAULT_OUTPUT --mode 1920x1080_60.00 --gamma $GAMMA
+else
+  xrandr --output $XRANDR_DEFAULT_OUTPUT --auto --gamma $GAMMA
+fi
+
+# fix broken panning with nvidia driver and modesetting
+if xrandr | grep eDP-1; then
+  if [[ "$position" == "left-of" ]]; then
+    for f in $(xrandr | grep ' connected' | cut -d' ' -f1); do
+      echo Fix panning for $f
+      xrandr --output $f --panning 0x0+0+0/0x0+0+0/-10000/-10000/-10000/-10000
+    done
+  fi
+fi
+
+[ $CONFIG -eq 1 ] && multihead_after
